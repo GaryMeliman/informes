@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Untitled Document</title>
+<link rel="stylesheet" type="text/css" href="../estilos/pordefecto/contenidos.css" />
+<style type="text/css">
+<!--
+.style1 {color: #FF0000}
+-->
+</style>
+</head>
+
+<body>
+<h2>AJAX, PHP, MySQL - Consulta de registros </h2>
+<p>Realizaremos un sencillo ejemplo de como recuperar registros de una tabla con AJAX. </p>
+<p>Este ejemplo lo he probado en IE, Firefox, Opera y Netscape sin darme errores. </p>
+<p>Es un ejemplo sencillo si estamos familiarizados con PHP y MySQL.A&uacute;n as&iacute; dare algunas explicaciones generales sobre el c&oacute;digo. </p>
+<h4>Creacion de la tabla </h4>
+<p> Entonces empezemos creando un tabla peque&ntilde;a llamada <strong>empleados</strong>, no tendr&aacute; mas que 5 campos: idempleado, nombres, departamento y sueldo; adem&aacute;s insertaremos algunos datos. </p>
+<pre class="codigo">CREATE TABLE empleados (   
+		idempleado int NOT NULL auto_increment,
+		nombres varchar(32) NOT NULL,
+		departamento varchar(40)NOT NULL,
+		sueldo double,
+		KEY id(idempleado) ) 
+TYPE=MyISAM;    
+
+
+INSERT INTO empleados VALUES (1, 'Juan Perez', 'Informatica',500.00);
+INSERT INTO empleados VALUES (2, 'Laura Morales', 'Contabilidad',550.00);
+INSERT INTO empleados VALUES (3, 'Luis Gutierrez', 'Administracion',850.00);
+INSERT INTO empleados VALUES (4, 'Pedro Solar', 'Informatica',500.00);
+INSERT INTO empleados VALUES (5, 'David Vilchez', 'Contabilidad',550.00);
+</pre>
+<h4>Creamos las funciones en javascript</h4>
+<p>Ahora escribiremos 2 funciones, en la primera ( <strong>objetoAjax</strong> ) tiene como objetivo elegir el objeto <strong>XMLHttpRequest</strong> dependiendo del navegador, y la segunda funci&oacute;n ( <strong>MostrarConsulta(parametro)</strong> ) tendr&aacute; como objetivo pedir los datos y mostrarlos en una capa (&lt;div&gt;) que especificaremos. Estas funciones lo podemos incluir en un archivo javascript (.js) al cual llamaremos <strong>ajax.js</strong> </p>
+<p><strong>ajax.js</strong></p>
+<pre class="codigo">function objetoAjax(){
+	var xmlhttp=false;
+	try {
+		xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+	} catch (e) {
+		try {
+		   xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		} catch (E) {
+			xmlhttp = false;
+  		}
+	}
+
+	if (!xmlhttp &amp;&amp; typeof XMLHttpRequest!='undefined') {
+		xmlhttp = new XMLHttpRequest();
+	}
+	return xmlhttp;
+}
+
+function MostrarConsulta(datos){
+	<span class="style1">divResultado = document.getElementById('resultado');</span>
+	ajax=objetoAjax();
+	ajax.open("GET", datos);
+	ajax.onreadystatechange=function() {
+		if (ajax.readyState==4) {
+			divResultado.innerHTML = ajax.responseText
+		}
+	}
+	ajax.send(null)
+}</pre>
+<h4>Pedir los datos con PHP </h4>
+<p>En esta parte escribiremos un script en PHP para realizar una consulta de todos los registros de la tabla <strong>empleados</strong> en la base de datos. </p>
+<p><strong>consulta.php</strong></p>
+<pre class="codigo">&lt;?php
+//Configuracion de la conexion a base de datos
+$bd_host = "localhost"; 
+$bd_usuario = "root"; 
+$bd_password = ""; 
+$bd_base = "ribosomatic"; 
+
+$con = mysql_connect($bd_host, $bd_usuario, $bd_password); 
+
+mysql_select_db($bd_base, $con); 
+
+//consulta todos los empleados
+
+$sql=mysql_query("SELECT * FROM empleados",$con);
+
+//muestra los datos consultados
+echo "&lt;/p&gt;Nombres - Departamento - Sueldo&lt;/p&gt; \n";
+while($row = mysql_fetch_array($sql)){
+	echo "&lt;p&gt;".$row['nombres']." - ".$row['departamento']." - ".$row['sueldo']."&lt;/p&gt; \n";
+}
+?&gt;</pre>
+</div>
+<h4>Formulario de consulta</h4>
+<p>Finalmente creamos un archivo <strong>html</strong> que contendr&aacute; un <strong>Form</strong> y un <strong>Button</strong> el cual realizar&aacute; la consulta.</p>
+<p><strong>consulta_empleados.html</strong></p>
+<pre class="codigo">&lt;html&gt;<br />
+    &lt;head&gt;<br />
+    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-1&quot; /&gt;<br />
+    &lt;title&gt;Consulta Registro con AJAX&lt;/title&gt;<br />
+  &lt;!-- referenciamos al archivo ajax.js donde se encuentra nuestra funcion objetoAjax--&gt;<br />
+    <span class="style1">&lt;script language=&quot;JavaScript&quot; type=&quot;text/javascript&quot; src=&quot;ajax.js&quot;&gt;&lt;/script&gt;</span><br />
+    &lt;/head&gt;<br />
+    &lt;body&gt;<br />
+    &lt;p&gt;Consultar registros con ajax&lt;/p&gt;"&lt;/p&gt;"&lt;p&gt;&lt;!-- En &quot;onsubmit&quot; escribimos la funci&oacute;n 'MostrarConsulta' que creamos en javascript, 
+con su parametro que es el archivo que vamos a mostrar, en este caso 'consulta.php'--&gt;<br />
+    &lt;form name=&quot;consulta&quot; action=&quot;&quot; <span class="style1">onsubmit=&quot;MostrarConsulta('consulta.php'); return false&quot;</span>&gt;
+
+  &lt;label&gt;<br />
+  &lt;input type=&quot;submit&quot; value=&quot;Consultar&quot; /&gt;<br />
+  &lt;/label&gt;<br />
+  &lt;/form&gt;<br />
+  <span class="style1">&lt;div id=&quot;resultado&quot;&gt;&lt;/div&gt;</span><br />
+  &lt;/body&gt;<br />
+&lt;/html&gt;</pre>
+<h4>En resumen</h4>
+<p>Para consultar los datos de una tabla hemos realizado lo siguiente: </p>
+<ul>
+  <li>Una funci&oacute;n para crear el objeto  XMLHttpRequest dependiendo del navegador. </li>
+  <li>Una funci&oacute;n que realizar&aacute; la petici&oacute;n de datos e indicar&aacute; donde se mostrar&aacute;n estos.</li>
+  <li>Una script en PHP que consulta los datos y los muestra.</li>
+  <li>Y finalmente el formulario de consulta.   </li>
+</ul>
+<p> Como podr&aacute;n apreciar el c&oacute;digo es realmente sencillo de entender, a&uacute;n as&iacute; dar&eacute; mas detalles si preguntan. Pueden descargar el <a href="http://ribosomatic.com/codigo/consulta_ajax1.zip">archivo</a> si desean. Hasta otra oportunidad. </p>
+</body>
+</html>
